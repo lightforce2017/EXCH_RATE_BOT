@@ -126,8 +126,14 @@ async def process_exc_command(message: types.Message, state: FSMContext):
         arguments = message.get_args()
         args = arguments.split(' ')
         val = args[0]
-        cur1 = args[1]
-        cur2 = args[3]
+        cur1 = cur2 = ''
+        if val.find('$') > -1: 
+            val = val[1:]
+            cur1 = 'USD'
+            cur2 = args[2]      
+        else:
+            cur1 = args[1]
+            cur2 = args[3]
         curr = CurList.split(',')
         print(args)
         v = 1.0
