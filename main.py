@@ -10,6 +10,7 @@ from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.contrib.middlewares.logging import LoggingMiddleware
 import requests
 import matplotlib.pyplot as plt
+import os
 
 # list of available currencies
 CurList = 'CAD,HKD,ISK,PHP,DKK,HUF,CZK,GBP,RON,SEK,IDR,INR,BRL,RUB,HRK,JPY,THB,CHF,EUR,MYR,BGN,TRY,CNY,NOK,NZD,ZAR,USD,MXN,SGD,AUD,ILS,KRW,PLN'
@@ -354,12 +355,14 @@ async def process_list_command(message: types.Message, state: FSMContext):
                                     plt.xticks(rotation=90)
                                     plt.plot(tick_label, y)
                                     #plt.bar(x, y, tick_label = tick_label, width = 0.8, color = ['red', 'green'])
-                                    plt.savefig('pics/viz.png')
+                                    f = 'pics/viz'+str(message.from_user.id)+'.png'
+                                    plt.savefig(f)
                                     plt.clf()
                                     #plt.show()
-                                    ms = 'график'
-                                    f = 'pics/viz.png'
+
                                     await bot.send_photo(message.from_user.id, photo=open(f, 'rb'))
+                                    if os.path.isfile(f):
+                                        os.remove(f)
                                 else: 
                                     ms = 'Data was not received'
                                 print('Новый запрос или Уже прошло 10 минут')
