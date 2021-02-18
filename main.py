@@ -354,15 +354,17 @@ async def process_list_command(message: types.Message, state: FSMContext):
                                     plt.xticks(rotation=90)
                                     plt.plot(tick_label, y)
                                     #plt.bar(x, y, tick_label = tick_label, width = 0.8, color = ['red', 'green'])
-                                    plt.savefig('viz.png')
+                                    plt.savefig('pics/viz.png')
                                     plt.clf()
                                     #plt.show()
                                     ms = 'график'
+                                    f = 'pics/viz.png'
+                                    await bot.send_photo(message.from_user.id, photo=open(f, 'rb'))
                                 else: 
                                     ms = 'Data was not received'
                                 print('Новый запрос или Уже прошло 10 минут')
                                 await Form.rhtime.set()
-                                await message.reply(ms)
+                                
                     else:
                        await message.reply('Check your request and try again') 
                 else:
