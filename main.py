@@ -79,11 +79,11 @@ async def process_list_command(message: types.Message, state: FSMContext):
                 for i in data['rl']:
                     ms += i+': {:.2f}'.format(data['rl'][i])+'\n'
             else: ms = 'Data was not received'
-        else:
+        else: # 10 min is not passed
             if data['rl'] is not None:
                 for i in data['rl']:
                     ms += i+': {:.2f}'.format(data['rl'][i])+'\n'
-            else: ms = 'Data was not received'
+            else: ms = 'Data was not received. Try after several minutes'
     print('Еще не прошло 10 минут')
     await message.reply(ms)
     
@@ -109,7 +109,71 @@ async def process_list_command(message: types.Message, state: FSMContext):
     await message.reply(ms)
 
 
-
+# not the first user input
+# /exchange $10 to CAD or /exchange 10 USD to CAD
+@dp.message_handler(state = Form.rltime, commands=['exchange'])
+async def process_exc_command(message: types.Message, state: FSMContext):
+    ms = '' #init ms for message
+    
+    if message.text == '/exchange':
+        await message.reply('Input command with parameters, ex: \n/exchange 10 USD to CAD')
+    else:
+        arguments = message.get_args()
+        args = arguments.split(' ')
+        val = args[0]
+        cur1 = cur2 = ''
+        if val.find('$') > -1: 
+            val = val[1:]
+            cur1 = 'USD'
+            cur2 = args[2]      
+        else:
+            cur1 = args[1]
+            cur2 = args[3]
+        curr = CurList.split(',')
+        print(args)
+        v = 1.0
+        if cur1 in CurList:
+            if cur2 in CurList:
+                try:
+                    float(val)
+                except ValueError:
+                    ms = 'Invalid amount'
+                    await message.reply(ms)
+                else:
+                    v = float(val)
+                    now = datetime.now().timestamp()
+                    async with state.proxy() as data:
+                        if not islimit(data['rltime'], now): # 10 min is passed
+                            await state.update_data(rltime = datetime.now().timestamp()) #renew timestamp
+                            response = requests.get("http://api.exchangeratesapi.io/latest?base="+cur1)
+                            ms = ''
+                            if response.status_code == 200:
+                                data['rl'] = response.json()['rates']
+                                for i in data['rl']:
+                                    if i == cur2:
+                                        print(data['rl'][i])
+                                        nval = float(data['rl'][i])*v
+                                        ms += cur1+str(val)+' to '+cur2+' is {:.2f}'.format(nval)
+                            else: 
+                                ms = 'Data was not received'
+                            print('Новый запрос или Уже прошло 10 минут')
+                            await message.reply(ms)
+                        else: # 10 min is not passed
+                            print('10 минут не прошло')
+                            if data['rl'] is not None:
+                                for i in data['rl']:
+                                    if i == cur2:
+                                        nval = float(data['rl'][i])*v
+                                        ms += cur1+str(val)+' to '+cur2+' is {:.2f}'.format(nval)
+                            else:
+                                ms = 'Data was not received. Try after several minutes'
+                            await message.reply(ms)
+            else:
+                ms = 'Invalid value of the second currency or it is not in the list'
+                await message.reply(ms)
+        else:
+            ms = 'Invalid value of the first currency or it is not in the list'
+            await message.reply(ms)
             
             
 # user's first input
@@ -147,7 +211,7 @@ async def process_exc_command(message: types.Message, state: FSMContext):
                 else:
                     v = float(val)
                     async with state.proxy() as data:
-                        data['retime'] = datetime.now().timestamp() # save the time of the request
+                        data['rltime'] = datetime.now().timestamp() # save the time of the request
                         response = requests.get("http://api.exchangeratesapi.io/latest?base="+cur1)
                         ms = ''
                         if response.status_code == 200:
