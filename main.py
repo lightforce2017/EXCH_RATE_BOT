@@ -34,8 +34,6 @@ dp.middleware.setup(LoggingMiddleware())
 class Form(StatesGroup):
     rltime = State()
     rl = State()
-    retime = State()
-    re = State()
     rhtime = State()
     rh = State()
 
@@ -109,7 +107,62 @@ async def process_list_command(message: types.Message, state: FSMContext):
     print('Новый запрос или Уже прошло 10 минут')
     await Form.rltime.set()
     await message.reply(ms)
-  
+
+
+
+            
+            
+# user's first input
+# /exchange $10 to CAD or /exchange 10 USD to CAD
+@dp.message_handler(state = '*', commands=['exchange'])
+async def process_exc_command(message: types.Message, state: FSMContext):
+    
+    
+    ms = '' #init ms for message
+    
+    if message.text == '/exchange':
+        await message.reply('Input command with parameters, ex: \n/exchange 10 USD to CAD')
+    else:
+        arguments = message.get_args()
+        args = arguments.split(' ')
+        val = args[0]
+        cur1 = args[1]
+        cur2 = args[3]
+        curr = CurList.split(',')
+        print(args)
+        v = 1.0
+        if cur1 in CurList:
+            if cur2 in CurList:
+                try:
+                    float(val)
+                except ValueError:
+                    ms = 'Invalid amount'
+                    await message.reply(ms)
+                else:
+                    v = float(val)
+                    async with state.proxy() as data:
+                        data['retime'] = datetime.now().timestamp() # save the time of the request
+                        response = requests.get("http://api.exchangeratesapi.io/latest?base="+cur1)
+                        ms = ''
+                        if response.status_code == 200:
+                            data['rl'] = response.json()['rates']
+                            for i in data['rl']:
+                                if i == cur2:
+                                    print(data['rl'][i])
+                                    nval = float(data['rl'][i])*v
+                                    ms += cur1+str(val)+' to '+cur2+' is {:.2f}'.format(nval)
+                        else: 
+                            ms = 'Data was not received'
+                        print('Новый запрос или Уже прошло 10 минут')
+                        await Form.rltime.set()
+                        await message.reply(ms)
+            else:
+                ms = 'Invalid value of the second currency or it is not in the list'
+                await message.reply(ms)
+        else:
+            ms = 'Invalid value of the first currency or it is not in the list'
+            await message.reply(ms)
+            
 
 # user's first input
 # /exchange $10 to CAD or /exchange 10 USD to CAD
@@ -162,20 +215,7 @@ async def process_exc_command(message: types.Message, state: FSMContext):
             ms = 'Invalid value of the first currency or it is not in the list'
             await message.reply(ms)
         
-    '''
-    async with state.proxy() as data:
-        data['retime'] = datetime.now().timestamp() #save the time of the request
-        response = requests.get("http://api.exchangeratesapi.io/latest?base=USD")
-        ms = ''
-        if response.status_code == 200:
-            data['re'] = response.json()['rates']
-            for i in data['re']:
-                ms += i+': {:.2f}'.format(data['re'][i])+'\n'
-        else: 
-            ms = 'Data was not received'
-    print('Новый запрос или Уже прошло 10 минут')
-    await Form.rltime.set()'''
-    #await message.reply(ms)
+
     
 @dp.message_handler()
 async def echo_message(msg: types.Message):
