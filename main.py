@@ -127,10 +127,10 @@ async def process_exc_command(message: types.Message, state: FSMContext):
         if val.find('$') > -1: 
             val = val[1:]
             cur1 = 'USD'
-            cur2 = args[2]      
+            cur2 = args[2].upper()      
         else:
-            cur1 = args[1]
-            cur2 = args[3]
+            cur1 = args[1].upper()
+            cur2 = args[3].upper()
         curr = CurList.split(',')
         print(args)
         v = 1.0
@@ -196,10 +196,10 @@ async def process_exc_command(message: types.Message, state: FSMContext):
         if val.find('$') > -1: 
             val = val[1:]
             cur1 = 'USD'
-            cur2 = args[2]      
+            cur2 = args[2].upper()     
         else:
-            cur1 = args[1]
-            cur2 = args[3]
+            cur1 = args[1].upper()
+            cur2 = args[3].upper()
         curr = CurList.split(',')
         print(args)
         v = 1.0
@@ -254,8 +254,8 @@ async def process_list_command(message: types.Message, state: FSMContext):
             await message.reply('Invalid currency delimiter. Must be /')    
         else:
             cct = cc.split('/')
-            cur1 = cct[0]
-            cur2 = cct[1]
+            cur1 = cct[0].upper()
+            cur2 = cct[1].upper()
             curr = CurList.split(',')
             if cur1 in CurList:
                 if cur2 in CurList:
