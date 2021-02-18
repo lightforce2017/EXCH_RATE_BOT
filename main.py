@@ -321,27 +321,50 @@ async def process_list_command(message: types.Message, state: FSMContext):
                                         await message.reply(ms)
                         else: #1 arg
                             val = 7
-                            '''
                             async with state.proxy() as data:
-                                data['rltime'] = datetime.now().timestamp() # save the time of the request
-                                response = requests.get("http://api.exchangeratesapi.io/latest?base="+cur1)
+                                data['rhtime'] = datetime.now().timestamp() # save the time of the request
+                                lastdate = datetime.today().strftime('%Y-%m-%d')
+                                firstdate = (datetime.today() - timedelta(days=val)).strftime('%Y-%m-%d')
+                                #api.exchangeratesapi.io/history?start_at=2019-11-27&end_at=2019-12-03&base=USD&symbols=CAD
+                                response = requests.get("http://api.exchangeratesapi.io/history?start_at="+firstdate+"&end_at="+lastdate+"&base="+cur1+"&symbols="+cur2)
                                 ms = ''
+                                hdict = {}
                                 if response.status_code == 200:
-                                    data['rl'] = response.json()['rates']
-                                    for i in data['rl']:
-                                        if i == cur2:
-                                            print(data['rl'][i])
-                                            nval = float(data['rl'][i])*v
-                                            ms += cur1+str(val)+' to '+cur2+' is {:.2f}'.format(nval)
+                                    data['rh'] = response.json()['rates']
+                                    print(data['rh'])
+                                    #y = []
+                                    #tick_label = []
+                                    for i in data['rh']:
+                                    #    print(r['rates'][i]['CAD'])
+                                        #y.append(data['rh'][i]['CAD'])
+                                        #tick_label.append(i)
+                                        hdict[i] = data['rh'][i][cur2]
+                                    print(hdict)
+                                    shdict = dict(sorted(hdict.items()))
+                                    print(shdict)
+                                    tick_label = list(shdict.keys())
+                                    y = list(shdict.values())
+                                    x = list(range(1, len(y)+1))
+                                    print(tick_label)
+                                    print(x)
+                                    print(y)
+                                    plt.title(cur1+'/'+cur2+' '+str(val)+' Day History - '+lastdate)
+                                    plt.xlabel('date')
+                                    plt.ylabel('rate')
+                                    plt.xticks(rotation=90)
+                                    plt.plot(tick_label, y)
+                                    #plt.bar(x, y, tick_label = tick_label, width = 0.8, color = ['red', 'green'])
+                                    plt.savefig('viz.png')
+                                    plt.clf()
+                                    #plt.show()
+                                    ms = 'график'
                                 else: 
                                     ms = 'Data was not received'
                                 print('Новый запрос или Уже прошло 10 минут')
                                 await Form.rhtime.set()
-                                await message.reply(ms)'''
+                                await message.reply(ms)
                     else:
                        await message.reply('Check your request and try again') 
-                        
-                    
                 else:
                     ms = 'Invalid value of the second currency or it is not in the list'
                     await message.reply(ms)
