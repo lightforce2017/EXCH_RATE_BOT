@@ -11,26 +11,16 @@ from aiogram.contrib.middlewares.logging import LoggingMiddleware
 import requests
 import matplotlib.pyplot as plt
 import os
-
-# list of available currencies
-CurList = 'CAD,HKD,ISK,PHP,DKK,HUF,CZK,GBP,RON,SEK,IDR,INR,BRL,RUB,HRK,JPY,THB,CHF,EUR,MYR,BGN,TRY,CNY,NOK,NZD,ZAR,USD,MXN,SGD,AUD,ILS,KRW,PLN'
-##### DELETE in PRODUCTION
-import json
-
-def jprint(obj):
-    # create a formatted string of the Python JSON object
-    text = json.dumps(obj, sort_keys=True, indent=4)
-    print(text)
-#####
-
 from conf import TOKEN
 from datetime import datetime, timedelta
 
+# list of available currencies
+CurList = 'CAD,HKD,ISK,PHP,DKK,HUF,CZK,GBP,RON,SEK,IDR,INR,BRL,RUB,HRK,JPY,THB,CHF,EUR,MYR,BGN,TRY,CNY,NOK,NZD,ZAR,USD,MXN,SGD,AUD,ILS,KRW,PLN'
 
 
 bot = Bot(token=TOKEN)
 dp = Dispatcher(bot, storage=MemoryStorage())
-dp.middleware.setup(LoggingMiddleware())
+
 
 
 class Form(StatesGroup):
@@ -54,15 +44,11 @@ async def process_start_command(message: types.Message):
 
 @dp.message_handler(commands=['help'])
 async def process_help_command(message: types.Message):
-    msg = text(bold('Я могу ответить на следующие команды:'),
+    msg = text(bold('Try this commands:'),
                '/list', '/lst', '/exchange', '/history', sep='\n')
     await message.reply(msg, parse_mode=ParseMode.MARKDOWN)
 
-'''все сообщения при нулевом состоянии
-@dp.message_handler()
-async def echo_message(msg: types.Message):
-    await bot.send_message(msg.from_user.id, msg.text)
-   '''
+
   
 # user's not the first input  
 @dp.message_handler(state = Form.rltime, commands=['list', 'lst'])
@@ -86,7 +72,6 @@ async def process_list_command(message: types.Message, state: FSMContext):
                 for i in data['rl']:
                     ms += i+': {:.2f}'.format(data['rl'][i])+'\n'
             else: ms = 'Data was not received. Try after several minutes'
-    print('Еще не прошло 10 минут')
     await message.reply(ms)
     
 # user's first input
@@ -106,7 +91,6 @@ async def process_list_command(message: types.Message, state: FSMContext):
                 ms += i+': {:.2f}'.format(data['rl'][i])+'\n'
         else: 
             ms = 'Data was not received'
-    print('Новый запрос или Уже прошло 10 минут')
     await Form.rltime.set()
     await message.reply(ms)
 
@@ -132,7 +116,6 @@ async def process_exc_command(message: types.Message, state: FSMContext):
             cur1 = args[1].upper()
             cur2 = args[3].upper()
         curr = CurList.split(',')
-        print(args)
         v = 1.0
         if cur1 in CurList:
             if cur2 in CurList:
@@ -153,20 +136,17 @@ async def process_exc_command(message: types.Message, state: FSMContext):
                                 data['rl'] = response.json()['rates']
                                 for i in data['rl']:
                                     if i == cur2:
-                                        print(data['rl'][i])
                                         nval = float(data['rl'][i])*v
-                                        ms += cur1+str(val)+' to '+cur2+' is {:.2f}'.format(nval)
+                                        ms += str(val)+ ' '+ cur1+' to '+cur2+' is {:.2f}'.format(nval)
                             else: 
                                 ms = 'Data was not received'
-                            print('Новый запрос или Уже прошло 10 минут')
                             await message.reply(ms)
                         else: # 10 min is not passed
-                            print('10 минут не прошло')
                             if data['rl'] is not None:
                                 for i in data['rl']:
                                     if i == cur2:
                                         nval = float(data['rl'][i])*v
-                                        ms += cur1+str(val)+' to '+cur2+' is {:.2f}'.format(nval)
+                                        ms += str(val)+ ' '+ cur1+' to '+cur2+' is {:.2f}'.format(nval)
                             else:
                                 ms = 'Data was not received. Try after several minutes'
                             await message.reply(ms)
@@ -201,7 +181,6 @@ async def process_exc_command(message: types.Message, state: FSMContext):
             cur1 = args[1].upper()
             cur2 = args[3].upper()
         curr = CurList.split(',')
-        print(args)
         v = 1.0
         if cur1 in CurList:
             if cur2 in CurList:
@@ -220,12 +199,10 @@ async def process_exc_command(message: types.Message, state: FSMContext):
                             data['rl'] = response.json()['rates']
                             for i in data['rl']:
                                 if i == cur2:
-                                    print(data['rl'][i])
                                     nval = float(data['rl'][i])*v
-                                    ms += cur1+str(val)+' to '+cur2+' is {:.2f}'.format(nval)
+                                    ms += str(val)+ ' '+ cur1+' to '+cur2+' is {:.2f}'.format(nval)
                         else: 
                             ms = 'Data was not received'
-                        print('Новый запрос или Уже прошло 10 минут')
                         await Form.rltime.set()
                         await message.reply(ms)
             else:
@@ -244,7 +221,7 @@ async def process_list_command(message: types.Message, state: FSMContext):
     
     ms = '' #init ms for message
     if message.text == '/history':
-        await message.reply('Input command with parameters, ex: \n/history USD/CAD')
+        await message.reply('Input command with parameters, ex: \n/history USD/CAD\nor\n/history USD/CAD for 7 days')
     else:
         arguments = message.get_args()
         args = arguments.split(' ')
@@ -278,16 +255,13 @@ async def process_list_command(message: types.Message, state: FSMContext):
                                     ms = 'Invalid request. I can show info only for several days.'
                                     await message.reply(ms)
                                 else:
-                                    #async with state.proxy() as data:
-                                   
                                     lastdate = datetime.today().strftime('%Y-%m-%d')
                                     firstdate = (datetime.today() - timedelta(days=val)).strftime('%Y-%m-%d')
-                                    #api.exchangeratesapi.io/history?start_at=2019-11-27&end_at=2019-12-03&base=USD&symbols=CAD
+                                    #Ex: api.exchangeratesapi.io/history?start_at=2019-11-27&end_at=2019-12-03&base=USD&symbols=CAD
                                     response = requests.get("http://api.exchangeratesapi.io/history?start_at="+firstdate+"&end_at="+lastdate+"&base="+cur1+"&symbols="+cur2)
                                     ms = ''
                                     hdict = {}
                                     if response.status_code == 200:
-                                        #data['rh'] = response.json()['rates']
                                         rh = response.json()['rates']
                                         for i in rh:
                                             hdict[i] = rh[i][cur2]
@@ -313,16 +287,13 @@ async def process_list_command(message: types.Message, state: FSMContext):
                                         
                         else: #1 arg
                             val = 7
-                            #async with state.proxy() as data:
-                                
                             lastdate = datetime.today().strftime('%Y-%m-%d')
                             firstdate = (datetime.today() - timedelta(days=val)).strftime('%Y-%m-%d')
-                            #api.exchangeratesapi.io/history?start_at=2019-11-27&end_at=2019-12-03&base=USD&symbols=CAD
+                            #Ex: api.exchangeratesapi.io/history?start_at=2019-11-27&end_at=2019-12-03&base=USD&symbols=CAD
                             response = requests.get("http://api.exchangeratesapi.io/history?start_at="+firstdate+"&end_at="+lastdate+"&base="+cur1+"&symbols="+cur2)
                             ms = ''
                             hdict = {}
                             if response.status_code == 200:
-                                #data['rh'] = response.json()['rates']
                                 rh = response.json()['rates']
                                 for i in rh:
                                     hdict[i] = rh[i][cur2]
