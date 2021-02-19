@@ -44,9 +44,15 @@ async def process_start_command(message: types.Message):
 
 @dp.message_handler(commands=['help'])
 async def process_help_command(message: types.Message):
-    msg = text(bold('Try this commands:'),
+    '''msg = text(bold('You can use this commands:'),
                '/list', '/lst', '/exchange', '/history', sep='\n')
-    await message.reply(msg, parse_mode=ParseMode.MARKDOWN)
+    await message.reply(msg, parse_mode=ParseMode.MARKDOWN)'''
+    ms = """Whole list of commands:
+/help - Get instructions about main commands
+/list - 
+/lst - as /list    """
+    
+    await message.reply(ms)
 
 
   
@@ -327,10 +333,42 @@ async def process_list_command(message: types.Message, state: FSMContext):
                 ms = 'Invalid value of the first currency or it is not in the list'
                 await message.reply(ms)   
 
+
     
 @dp.message_handler()
-async def echo_message(msg: types.Message):
-    await bot.send_message(msg.from_user.id, msg.text)
+async def echo_message(message: types.Message):
+    ms = 'Choose command'
+    if message.text == 'хелп':
+        ms = """Короче, смотри, как надо:
+/list - выводит список всех валют, которые найдет на сайте
+
+/lst - по сути то же самое, это если лень букву i искать
+
+/exchange - быстро посчитает, сколько баксов в 100 рублях, но только если написать так: 
+/exchange 100 RUB to USD
+Если написать USD мелкими буквами - не проблема, а вот опечаток я не прощаю!
+Впрочем, если тебе нужно по-быстрому обменять валюту, и хочешь посчитать, сколько рублей дадут за десятку баксов, можешь написать проще:
+/exchange $10 to RUB
+Почему нельзя наоборот, /exchange 100 RUB to $ ?
+Потому что я забочусь о тебе, и ты можешь пропустить знак доллара, а я буду ломать голову, что это такое.
+
+Погнали дальше
+
+/history - никаких учебников истории или истории твоего Телеграма. Просто сводка по курсам валют за последнюю неделю.
+Интересно? Тогда пиши
+/history USD/RUB for 7 days
+И нет, ты не можешь написать years вместо days, потому что это слишком даже для меня (да и зачем?)
+Окей, теоретически ты можешь перехитрить меня и выбрать 0 и даже миллион дней, но по факту я дам тебе прогноз либо за 1, либо за 14 дней. Оно тебе надо?
+И специально, если тебе неохота писать это #for 7 days#, можешь не писать:
+/history USD/RUB
+Я тогда сделаю сводку за последнюю неделю, потому что 7 - мое любимое число.
+И да, я не говорил, что нарисую даже картинку по этой теме? Хе-хе, увидишь.
+
+Кстати, пиши команды с /, а не с \, а то буду думать, что ты меня путаешь с кем-то."""
+    if message.text == ".дшые":
+        ms = "Sorry? I think, you want to tell me '/list', but don't sure."
+    await message.reply(ms)
+    #await bot.send_message(msg.from_user.id, msg.text)
     
     
 if __name__ == '__main__':
