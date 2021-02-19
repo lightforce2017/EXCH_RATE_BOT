@@ -17,6 +17,8 @@ from datetime import datetime, timedelta
 # list of available currencies
 CurList = 'CAD,HKD,ISK,PHP,DKK,HUF,CZK,GBP,RON,SEK,IDR,INR,BRL,RUB,HRK,JPY,THB,CHF,EUR,MYR,BGN,TRY,CNY,NOK,NZD,ZAR,USD,MXN,SGD,AUD,ILS,KRW,PLN'
 
+transl_com = ['.дшые','.дые','.учсрфтпу','.ршыещкн']
+
 
 bot = Bot(token=TOKEN)
 dp = Dispatcher(bot, storage=MemoryStorage())
@@ -34,23 +36,41 @@ def islimit(ts1, ts2):
     min = delta / 60
     return min < 10.00
     
-
+def translit(rutxt):
+    transl_list =     'йцукенгшщзфывапролдячсмитьЙЦУКЕНГШЩЗФЫВАПРОЛДЯЧСМИТЬ.;'
+    transl_dec_list = 'qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM/$'
+    for i in range(0, len(transl_list)):
+        rutxt = rutxt.replace(transl_list[i],transl_dec_list[i])
+    entxt = rutxt
+    return entxt
+    
+    
 @dp.message_handler(commands=['start'])
 async def process_start_command(message: types.Message):
-    await message.reply('Привет!\nИспользуй /help, '
-                        'чтобы узнать список доступных команд!')
+    await message.reply('Hello!\nType /help, '
+                        'to find how to use commands!')
                         
 
 
 @dp.message_handler(commands=['help'])
 async def process_help_command(message: types.Message):
-    '''msg = text(bold('You can use this commands:'),
-               '/list', '/lst', '/exchange', '/history', sep='\n')
-    await message.reply(msg, parse_mode=ParseMode.MARKDOWN)'''
-    ms = """Whole list of commands:
+    ms = """
+    Whole list of commands:
 /help - Get instructions about main commands
-/list - 
-/lst - as /list    """
+
+/list - returns list of all available rates
+
+/lst - as /list,  returns list of all available rates
+
+/exchange - converts to the second currency with two decimal precision and return. Examples: 
+/exchange 10 USD to CAD
+/exchange $10 to CAD
+
+/history - return an image graph chart which shows the exchange rate graph/chart of the selected currency for the last N days.
+Examples:
+/history USD/CAD for 7 days
+/history USD/CAD
+In the second case it will show graph for the last 7 days"""
     
     await message.reply(ms)
 
@@ -79,14 +99,12 @@ async def process_list_command(message: types.Message, state: FSMContext):
                     ms += i+': {:.2f}'.format(data['rl'][i])+'\n'
             else: ms = 'Data was not received. Try after several minutes'
     await message.reply(ms)
-    
+  
+  
 # user's first input
 @dp.message_handler(state = '*', commands=['list', 'lst'])
-async def process_list_command(message: types.Message, state: FSMContext):
-    
-    
+async def process_list_command(message: types.Message, state: FSMContext):    
     ms = '' #init ms for message
-
     async with state.proxy() as data:
         data['rltime'] = datetime.now().timestamp() #save the time of the request
         response = requests.get("http://api.exchangeratesapi.io/latest?base=USD")
@@ -337,7 +355,7 @@ async def process_list_command(message: types.Message, state: FSMContext):
     
 @dp.message_handler()
 async def echo_message(message: types.Message):
-    ms = 'Choose command'
+    ms = 'Choose proper command.\nType /help for help'
     if message.text == 'хелп':
         ms = """Короче, смотри, как надо:
 /list - выводит список всех валют, которые найдет на сайте
@@ -365,8 +383,11 @@ async def echo_message(message: types.Message):
 И да, я не говорил, что нарисую даже картинку по этой теме? Хе-хе, увидишь.
 
 Кстати, пиши команды с /, а не с \, а то буду думать, что ты меня путаешь с кем-то."""
-    if message.text == ".дшые":
-        ms = "Sorry? I think, you want to tell me '/list', but don't sure."
+    if message.text.split(' ')[0] in transl_com:
+        ms = 'I think, you wanted to input this:'
+        await message.reply(ms)
+        ms = translit(message.text)
+
     await message.reply(ms)
     #await bot.send_message(msg.from_user.id, msg.text)
     
